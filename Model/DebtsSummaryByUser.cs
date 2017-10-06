@@ -1,9 +1,9 @@
 namespace I.Owe.You.Api.Model
 {
-    public class DebtsSummaryByUser
+    public class DebtsSummaryByUser : Entity
     {
 
-        public User User { get; set; }
+        public int UserId { get; set; }
         public float DebtDifference { get; set; }
 
     }

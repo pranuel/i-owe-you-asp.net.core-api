@@ -23,7 +23,6 @@ namespace I.Owe.You.Api.Repository
         }
 
         public async Task<User> GetUserBySubAsync(string sub) {
-            var foo = await this.context.Users.ToListAsync();
             // docu: https://docs.microsoft.com/en-us/ef/core/querying/async
             return await this.context.Users.Where(u => u.Sub == sub).SingleOrDefaultAsync();
         }

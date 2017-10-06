@@ -93,7 +93,6 @@ namespace I.Owe.You.Api
                 Sub = "test sub 2"
             };
             await usersRepo.AddUserAsync(testUser2);
-            var foo = await usersRepo.GetUserBySubAsync(testUser2.Sub);
 
             var testDebt1 = new Debt
             {

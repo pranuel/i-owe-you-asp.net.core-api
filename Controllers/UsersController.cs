@@ -9,44 +9,56 @@ namespace I.Owe.You.Api.Controllers
 {
     public class UsersController : BaseController
     {
-        private UsersRepo UsersRepo { get; }
+        private UsersRepo _usersRepo { get; }
 
         public UsersController(UsersRepo usersRepo)
         {
-            UsersRepo = usersRepo;
+            _usersRepo = usersRepo;
         }
 
         // GET api/users/me
         [HttpGet("me")]
-        public async Task<User> Me()
+        public async Task<IActionResult> Me()
         {
-            var me = await UsersRepo.GetUserBySubAsync(UserSub);
+            var me = await _usersRepo.GetUserBySubAsync(UserSub);
+            if (me == null)
+            {
+                return NotFound();
+            }
+            return Ok(me);
+        }
+
+        // GET api/users/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+            var user = await _usersRepo.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return Ok(user);
+        }
+
+        // POST api/users/me
+        [HttpPost("me")]
+        public async Task<User> PostAsync(User user)
+        {
+            await this._usersRepo.AddMeAsync(user, UserSub);
+            var me = await _usersRepo.GetUserBySubAsync(UserSub);
             return me;
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        // GET api/users?name=foo
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] string name)
         {
-            return "value";
-        }
-
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody]string value)
-        {
-        }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            var user = await _usersRepo.GetUserByName(name);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return Ok(user);
         }
     }
 }

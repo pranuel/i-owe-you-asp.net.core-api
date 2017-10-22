@@ -30,6 +30,7 @@ namespace I.Owe.You.Api
             services.AddDbContext<ApiContext>(opt => opt.UseInMemoryDatabase("debts_database"));
             services.AddScoped<DebtsRepo>();
             services.AddScoped<UsersRepo>();
+            services.AddScoped<DebtsSummariesRepo>();
 
             services.AddMvc();
 
@@ -65,22 +66,22 @@ namespace I.Owe.You.Api
 
             app.UseMvc();
 
-            using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
-            {
-                var serviceProvider = serviceScope.ServiceProvider;
-                var debtsRepo = serviceProvider.GetService<DebtsRepo>();
-                var usersRepo = serviceProvider.GetService<UsersRepo>();
-                AddTestDataAsync(debtsRepo, usersRepo).Wait();
-            }
+            // using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            // {
+            //     var serviceProvider = serviceScope.ServiceProvider;
+            //     var debtsRepo = serviceProvider.GetService<DebtsRepo>();
+            //     var usersRepo = serviceProvider.GetService<UsersRepo>();
+            //     var debtsSummariesRepo = serviceProvider.GetService<DebtsSummariesRepo>();
+            //     AddTestDataAsync(debtsRepo, usersRepo, debtsSummariesRepo).Wait();
+            // }
         }
 
-        private async Task AddTestDataAsync(DebtsRepo debtsRepo, UsersRepo usersRepo)
+        private async Task AddTestDataAsync(DebtsRepo debtsRepo, UsersRepo usersRepo, DebtsSummariesRepo debtsSummariesRepo)
         {
             var testUser1 = new User
             {
                 Id = 1,
-                FirstName = "Luke",
-                LastName = "Skywalker",
+                Name = "Luke Skywalker",
                 Sub = "facebook|1080925881970593"
             };
             await usersRepo.AddUserAsync(testUser1);
@@ -88,8 +89,7 @@ namespace I.Owe.You.Api
             var testUser2 = new User
             {
                 Id = 2,
-                FirstName = "Darth",
-                LastName = "Vader",
+                Name = "Darth Vader",
                 Sub = "test sub 2"
             };
             await usersRepo.AddUserAsync(testUser2);
@@ -104,6 +104,7 @@ namespace I.Owe.You.Api
             };
 
             await debtsRepo.AddDebtAsync(testDebt1);
+            await debtsSummariesRepo.UpdateSummariesAsync(testUser1, testUser2, 100, testDebt1.Timestamp);
         }
     }
 }

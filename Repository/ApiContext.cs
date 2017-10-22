@@ -15,8 +15,8 @@ namespace I.Owe.You.Api.Repository
 
         public DbSet<Debt> Debts { get; set; }
 
-        public DbSet<DebtsSummaryByUser> DebtsSummariesByUser { get; set; }
-        
+        public DbSet<DebtsSummary> DebtsSummaries { get; set; }
+
     }
 
 }

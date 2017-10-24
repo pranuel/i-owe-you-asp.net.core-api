@@ -16,24 +16,16 @@ namespace I.Owe.You.Api.Controllers
             _debtsRepo = debtsRepo;
         }
 
-        // GET api/debts
+        // GET api/debts?partner=3
         [HttpGet]
-        public async Task<Debt[]> GetAll()
+        public async Task<Debt[]> GetDebtsForPartnerAsync([FromQuery] int partnerId)
         {
-            var debts = await _debtsRepo.GetAllDebtsAsync();
-            return debts;
-        }
-
-        // GET api/debts/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
+            return await _debtsRepo.GetAllDebtsForPartner(partnerId);
         }
 
         // POST api/debts
         [HttpPost]
-        public async Task Post(Debt debt)
+        public async Task Post([FromBody]Debt debt)
         {
             await _debtsRepo.AddDebtAsync(debt);
         }

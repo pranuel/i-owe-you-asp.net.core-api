@@ -8,7 +8,7 @@ namespace I.Owe.You.Api.Model
         public int CreditorId { get; set; }
         public User Creditor { get; set; }
         public float Amount { get; set; }
-        public int Timestamp { get; set; }
+        public long Timestamp { get; set; }
         public string Reason { get; set; }
 
     }

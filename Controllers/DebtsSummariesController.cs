@@ -23,5 +23,12 @@ namespace I.Owe.You.Api.Controllers
             return await _debtsSummariesRepo.GetAllDebtsSummariesForMeAsync(UserSub);
         }
 
+        // GET api/debtssummaries/5
+        [HttpGet("{id}")]
+        public async Task<DebtsSummary> GetAsync(int id)
+        {
+            return await _debtsSummariesRepo.GetDebtsSummaryByIdAsync(id);
+        }
+
     }
 }

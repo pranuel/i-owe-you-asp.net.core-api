@@ -27,7 +27,20 @@ namespace I.Owe.You.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApiContext>(opt => opt.UseInMemoryDatabase("debts_database"));
+            // Use SQL Database if in Azure, otherwise, use in memory
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+            {
+                services.AddDbContext<ApiContext>(options =>
+                    options.UseSqlServer(Configuration.GetConnectionString("Database")));
+                // Automatically perform database migration
+                services.BuildServiceProvider().GetService<ApiContext>().Database.Migrate();
+            }
+            else
+            {
+                services.AddDbContext<ApiContext>(options =>
+                    options.UseInMemoryDatabase("debts_database"));
+            }
+
             services.AddScoped<DebtsRepo>();
             services.AddScoped<UsersRepo>();
             services.AddScoped<DebtsSummariesRepo>();
@@ -54,6 +67,11 @@ namespace I.Owe.You.Api
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                {
+                    var serviceProvider = serviceScope.ServiceProvider;
+                    SeedData.Initialize(serviceProvider);
+                }
             }
 
             app.UseCors(builder => builder
@@ -65,46 +83,6 @@ namespace I.Owe.You.Api
             app.UseAuthentication();
 
             app.UseMvc();
-
-            // using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
-            // {
-            //     var serviceProvider = serviceScope.ServiceProvider;
-            //     var debtsRepo = serviceProvider.GetService<DebtsRepo>();
-            //     var usersRepo = serviceProvider.GetService<UsersRepo>();
-            //     var debtsSummariesRepo = serviceProvider.GetService<DebtsSummariesRepo>();
-            //     AddTestDataAsync(debtsRepo, usersRepo, debtsSummariesRepo).Wait();
-            // }
-        }
-
-        private async Task AddTestDataAsync(DebtsRepo debtsRepo, UsersRepo usersRepo, DebtsSummariesRepo debtsSummariesRepo)
-        {
-            var testUser1 = new User
-            {
-                Id = 1,
-                Name = "Luke Skywalker",
-                Sub = "facebook|1080925881970593"
-            };
-            await usersRepo.AddUserAsync(testUser1);
-
-            var testUser2 = new User
-            {
-                Id = 2,
-                Name = "Darth Vader",
-                Sub = "test sub 2"
-            };
-            await usersRepo.AddUserAsync(testUser2);
-
-            var testDebt1 = new Debt
-            {
-                Id = 1,
-                DebtorId = testUser1.Id,
-                CreditorId = testUser2.Id,
-                Amount = 100,
-                Reason = "build death star"
-            };
-
-            await debtsRepo.AddDebtAsync(testDebt1);
-            await debtsSummariesRepo.UpdateSummariesAsync(testUser1, testUser2, 100, testDebt1.Timestamp);
         }
     }
 }

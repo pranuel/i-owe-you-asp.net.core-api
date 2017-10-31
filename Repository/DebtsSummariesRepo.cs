@@ -21,6 +21,7 @@ namespace I.Owe.You.Api.Repository
         public async Task<DebtsSummary> GetDebtsSummaryByIdAsync(int id)
         {
             return await _context.DebtsSummaries
+                .Include(ds => ds.Me)
                 .Include(ds => ds.Partner)
                 .FirstOrDefaultAsync(ds => ds.Id == id);
         }
@@ -28,8 +29,9 @@ namespace I.Owe.You.Api.Repository
         public async Task<List<DebtsSummary>> GetAllDebtsSummariesForMeAsync(string mySub)
         {
             return await _context.DebtsSummaries
+                .Include(ds => ds.Me)
                 .Include(ds => ds.Partner)
-                .Where(ds => ds.Partner.Sub == mySub)
+                .Where(ds => ds.Me.Sub == mySub)
                 .ToListAsync();
         }
 
@@ -38,7 +40,7 @@ namespace I.Owe.You.Api.Repository
             var creditorSummary = await this.GetDebtsSummaryByUserIdAsync(creditor.Id);
             if (creditorSummary == null)
             {
-                creditorSummary = CreateDebtsSummary(creditor, amount, debtTimestamp);
+                creditorSummary = CreateDebtsSummary(creditor, debtor, amount, debtTimestamp);
             }
             else
             {
@@ -50,7 +52,7 @@ namespace I.Owe.You.Api.Repository
             var debtorSummary = await this.GetDebtsSummaryByUserIdAsync(debtor.Id);
             if (debtorSummary == null)
             {
-                debtorSummary = CreateDebtsSummary(debtor, -amount, debtTimestamp);
+                debtorSummary = CreateDebtsSummary(debtor, creditor, -amount, debtTimestamp);
             }
             else
             {
@@ -60,12 +62,12 @@ namespace I.Owe.You.Api.Repository
             await this.CreateOrUpdateDebtsSummaryByUserAsync(debtorSummary);
         }
 
-        private DebtsSummary CreateDebtsSummary(User partner, float debtDifference, long lastDebtTimestamp)
+        private DebtsSummary CreateDebtsSummary(User me, User partner, float debtDifference, long lastDebtTimestamp)
         {
             return new DebtsSummary
             {
-                Partner = partner,
                 PartnerId = partner.Id,
+                MeId = me.Id,
                 DebtDifference = debtDifference,
                 LastDebtTimestamp = lastDebtTimestamp
             };
@@ -73,7 +75,7 @@ namespace I.Owe.You.Api.Repository
 
         private async Task<DebtsSummary> GetDebtsSummaryByUserIdAsync(int userId)
         {
-            return await this._context.DebtsSummaries.FirstOrDefaultAsync(dsbu => dsbu.PartnerId == userId);
+            return await this._context.DebtsSummaries.FirstOrDefaultAsync(ds => ds.MeId == userId);
         }
 
         private async Task CreateOrUpdateDebtsSummaryByUserAsync(DebtsSummary debtsSummaryByUser)

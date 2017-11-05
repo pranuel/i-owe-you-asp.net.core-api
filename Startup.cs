@@ -77,7 +77,7 @@ namespace I.Owe.You.Api
             app.UseCors(builder => builder
                 .WithOrigins("http://localhost:8888")
                 .AllowAnyMethod()
-                .AllowAnyHeader()); ;
+                .AllowAnyHeader());
 
             // 2. Enable authentication middleware
             app.UseAuthentication();

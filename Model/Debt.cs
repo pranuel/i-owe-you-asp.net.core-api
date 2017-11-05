@@ -10,6 +10,7 @@ namespace I.Owe.You.Api.Model
         public float Amount { get; set; }
         public long Timestamp { get; set; }
         public string Reason { get; set; }
+        public bool IsRepaid { get; set; }
 
     }
 }

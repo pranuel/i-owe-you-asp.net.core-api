@@ -44,7 +44,7 @@ namespace I.Owe.You.Api.Repository
             debt.Debtor = null;
             await this._context.Debts.AddAsync(debt);
             await this._context.SaveChangesAsync();
-            await _debtsSummariesRepo.UpdateSummariesAsync(creditor, debtor, debt.Amount, debt.Timestamp);
+            await _debtsSummariesRepo.UpdateSummariesAsync(debt);
         }
     }
 }

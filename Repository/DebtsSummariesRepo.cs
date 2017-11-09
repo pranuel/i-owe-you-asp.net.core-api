@@ -18,58 +18,74 @@ namespace I.Owe.You.Api.Repository
             _context = context;
         }
 
-        public async Task<DebtsSummary> GetDebtsSummaryByIdAsync(int id)
+        public async Task<DebtsSummary> GetDebtsSummaryByIdAsync(int id, string mySub)
         {
-            return await _context.DebtsSummaries
-                .Include(ds => ds.Me)
-                .Include(ds => ds.Partner)
+            return await IncludeRequiredFields(_context.DebtsSummaries)
+                .Select(ds => IncludeUnmappedFields(ds, mySub))
                 .FirstOrDefaultAsync(ds => ds.Id == id);
         }
 
         public async Task<List<DebtsSummary>> GetAllDebtsSummariesForMeAsync(string mySub)
         {
-            return await _context.DebtsSummaries
-                .Include(ds => ds.Me)
-                .Include(ds => ds.Partner)
+            return await IncludeRequiredFields(_context.DebtsSummaries)
                 .Where(ds => ds.Me.Sub == mySub)
+                .Select(ds => IncludeUnmappedFields(ds, mySub))
                 .ToListAsync();
         }
 
-        public async Task UpdateSummariesAsync(User creditor, User debtor, float amount, long debtTimestamp)
+        private IQueryable<DebtsSummary> IncludeRequiredFields(DbSet<DebtsSummary> debtsSummaries)
         {
-            var creditorSummary = await this.GetDebtsSummaryByUserIdAsync(creditor.Id);
+            return debtsSummaries
+                .Include(ds => ds.Debts)
+                .Include(ds => ds.Me)
+                .Include(ds => ds.Partner);
+        }
+
+        private DebtsSummary IncludeUnmappedFields(DebtsSummary debtsSummary, string mySub)
+        {
+            var debtDifference = debtsSummary.Debts
+                    .Where(d => !d.IsRepaid)
+                    .Select(d => (d.Creditor.Sub == mySub) ? d.Amount : (-1 * d.Amount))
+                    .Sum(amount => amount);
+            var lastTimestamp = debtsSummary.Debts
+            .Where(d => !d.IsRepaid)
+            .Select(d => d.Timestamp)
+            .OrderByDescending(t => t)
+            .FirstOrDefault();
+            debtsSummary.DebtDifference = debtDifference;
+            debtsSummary.LastDebtTimestamp = lastTimestamp;
+            return debtsSummary;
+        }
+
+        public async Task UpdateSummariesAsync(Debt debt)
+        {
+            var creditorId = debt.CreditorId;
+            var debtorId = debt.DebtorId;
+
+            var creditorSummary = await this.GetDebtsSummaryByUserIdAsync(creditorId);
             if (creditorSummary == null)
             {
-                creditorSummary = CreateDebtsSummary(creditor, debtor, amount, debtTimestamp);
+                creditorSummary = CreateDebtsSummary(creditorId, debtorId);
             }
-            else
-            {
-                creditorSummary.DebtDifference += amount;
-                creditorSummary.LastDebtTimestamp = debtTimestamp;
-            }
+            creditorSummary.Debts.Add(debt);
             await this.CreateOrUpdateDebtsSummaryByUserAsync(creditorSummary);
 
-            var debtorSummary = await this.GetDebtsSummaryByUserIdAsync(debtor.Id);
+            var debtorSummary = await this.GetDebtsSummaryByUserIdAsync(debtorId);
             if (debtorSummary == null)
             {
-                debtorSummary = CreateDebtsSummary(debtor, creditor, -amount, debtTimestamp);
+                debtorSummary = CreateDebtsSummary(debtorId, creditorId);
             }
-            else
-            {
-                debtorSummary.DebtDifference -= amount;
-                debtorSummary.LastDebtTimestamp = debtTimestamp;
-            }
+            debtorSummary.Debts.Add(debt);
             await this.CreateOrUpdateDebtsSummaryByUserAsync(debtorSummary);
         }
 
-        private DebtsSummary CreateDebtsSummary(User me, User partner, float debtDifference, long lastDebtTimestamp)
+        private DebtsSummary CreateDebtsSummary(int meId, int partnerId)
         {
             return new DebtsSummary
             {
-                PartnerId = partner.Id,
-                MeId = me.Id,
-                DebtDifference = debtDifference,
-                LastDebtTimestamp = lastDebtTimestamp
+                PartnerId = partnerId,
+                MeId = meId,
+                Debts = new List<Debt>()
             };
         }
 

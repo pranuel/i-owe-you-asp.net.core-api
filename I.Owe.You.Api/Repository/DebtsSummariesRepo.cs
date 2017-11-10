@@ -61,32 +61,25 @@ namespace I.Owe.You.Api.Repository
         {
             var creditorId = debt.CreditorId;
             var debtorId = debt.DebtorId;
-
-            var creditorSummary = await this.GetDebtsSummaryByUserIdAsync(creditorId);
-            if (creditorSummary == null)
-            {
-                creditorSummary = CreateDebtsSummary(creditorId, debtorId);
-            }
-            creditorSummary.Debts.Add(debt);
-            await this.CreateOrUpdateDebtsSummaryByUserAsync(creditorSummary);
-
-            var debtorSummary = await this.GetDebtsSummaryByUserIdAsync(debtorId);
-            if (debtorSummary == null)
-            {
-                debtorSummary = CreateDebtsSummary(debtorId, creditorId);
-            }
-            debtorSummary.Debts.Add(debt);
-            await this.CreateOrUpdateDebtsSummaryByUserAsync(debtorSummary);
+            await CreateOrUpdateDebtsSummaryForPartnerAndMeAsync(creditorId, debtorId, debt);
+            await CreateOrUpdateDebtsSummaryForPartnerAndMeAsync(debtorId, creditorId, debt);
         }
 
-        private DebtsSummary CreateDebtsSummary(int meId, int partnerId)
+        private async Task CreateOrUpdateDebtsSummaryForPartnerAndMeAsync(int meId, int partnerId, Debt debt)
         {
-            return new DebtsSummary
+
+            var myDebtSummary = await GetDebtsSummaryByUserIdAsync(meId);
+            if (myDebtSummary == null)
             {
-                PartnerId = partnerId,
-                MeId = meId,
-                Debts = new List<Debt>()
-            };
+                myDebtSummary = new DebtsSummary
+                {
+                    PartnerId = partnerId,
+                    MeId = meId,
+                    Debts = new List<Debt>()
+                };
+            }
+            myDebtSummary.Debts.Add(debt);
+            await CreateOrUpdateDebtsSummaryByUserAsync(myDebtSummary);
         }
 
         private async Task<DebtsSummary> GetDebtsSummaryByUserIdAsync(int userId)
@@ -96,7 +89,7 @@ namespace I.Owe.You.Api.Repository
 
         private async Task CreateOrUpdateDebtsSummaryByUserAsync(DebtsSummary debtsSummaryByUser)
         {
-            var existingDebtsSummary = await GetDebtsSummaryByUserIdAsync(debtsSummaryByUser.PartnerId);
+            var existingDebtsSummary = await GetDebtsSummaryByUserIdAsync(debtsSummaryByUser.MeId);
             // reset partner object:
             debtsSummaryByUser.Partner = null;
             if (existingDebtsSummary == null)

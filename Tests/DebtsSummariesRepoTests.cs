@@ -21,7 +21,7 @@ namespace I.Owe.You.Api.Tests
                 var sut = new DebtsSummariesRepo(context);
                 var debtsSummaries = await sut.GetAllDebtsSummariesForMeAsync("facebook|1080925881970593");
                 debtsSummaries.Count.Should().Be(1);
-                debtsSummaries.Exists(ds => ds.DebtDifference == -100).Should().BeTrue();
+                debtsSummaries.Exists(ds => ds.DebtDifference == -90).Should().BeTrue();
             }
         }
 
@@ -68,7 +68,6 @@ namespace I.Owe.You.Api.Tests
                 var debtsRepo = new DebtsRepo(context, debtsSummariesRepo);
                 var testDebt1 = new Debt
                 {
-                    Id = 1,
                     Debtor = testUser1,
                     DebtorId = testUser1.Id,
                     Creditor = testUser2,
@@ -77,6 +76,17 @@ namespace I.Owe.You.Api.Tests
                     Reason = "build death star"
                 };
                 await debtsRepo.AddDebtAsync(testDebt1);
+
+                var testDebt2 = new Debt
+                {
+                    Debtor = testUser2,
+                    DebtorId = testUser2.Id,
+                    Creditor = testUser1,
+                    CreditorId = testUser1.Id,
+                    Amount = 10,
+                    Reason = "buy sweets"
+                };
+                await debtsRepo.AddDebtAsync(testDebt2);
             }
 
             return options;

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using I.Owe.You.Api.Model;
 using I.Owe.You.Api.Repository;
@@ -24,18 +25,24 @@ namespace I.Owe.You.Api.Tests
                 await usersRepo.AddUserAsync(TestData.User1);
                 await usersRepo.AddUserAsync(TestData.User2);
 
-                var debtsSummariesRepo = new DebtsSummariesRepo(context);
+                var debtsSummariesRepo = new DebtsGroupRepo(context);
                 var debtsRepo = new DebtsRepo(context, debtsSummariesRepo);
-                await debtsRepo.AddDebtAsync(TestData.Debt1);
-                await debtsRepo.AddDebtAsync(TestData.Debt2);
+                
+                await debtsRepo.AddDebtAsync(TestData.Debt1);                
+                await debtsRepo.AddDebtAsync(TestData.Debt2);                
+                await debtsRepo.AddDebtAsync(TestData.Debt3);
+
+                var allDebts = await debtsRepo.GetAllDebtsAsync();
+                allDebts.Length.Should().Be(3);
             }
 
             using (var context = new ApiContext(options))
             {
-                var sut = new DebtsSummariesRepo(context);
+                var sut = new DebtsGroupRepo(context);
                 var debtsSummaries = await sut.GetAllDebtsSummariesForMeAsync(TestData.User1.Sub);
                 debtsSummaries.Count.Should().Be(1);
-                debtsSummaries.Exists(ds => ds.DebtDifference == -90).Should().BeTrue();
+                var foo = debtsSummaries.FirstOrDefault();
+                debtsSummaries.Exists(ds => ds.DebtDifference == -85).Should().BeTrue();
             }
         }
 
@@ -47,7 +54,7 @@ namespace I.Owe.You.Api.Tests
                 .Options;
             using (var context = new ApiContext(options))
             {
-                var sut = new DebtsSummariesRepo(context);
+                var sut = new DebtsGroupRepo(context);
                 var debtsSummaries = await sut.GetAllDebtsSummariesForMeAsync("facebook|1080925881970593");
                 debtsSummaries.Count.Should().Be(0);
             }

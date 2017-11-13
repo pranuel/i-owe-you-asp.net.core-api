@@ -8,40 +8,40 @@ using Microsoft.EntityFrameworkCore;
 namespace I.Owe.You.Api.Repository
 {
 
-    public class DebtsSummariesRepo
+    public class DebtsGroupRepo
     {
 
         private readonly ApiContext _context;
 
-        public DebtsSummariesRepo(ApiContext context)
+        public DebtsGroupRepo(ApiContext context)
         {
             _context = context;
         }
 
-        public async Task<DebtsSummary> GetDebtsSummaryByIdAsync(int id, string mySub)
+        public async Task<DebtsGroup> GetDebtsSummaryByIdAsync(int id, string mySub)
         {
-            return await IncludeRequiredFields(_context.DebtsSummaries)
+            return await IncludeRequiredFields(_context.DebtsGroups)
                 .Select(ds => IncludeUnmappedFields(ds, mySub))
                 .FirstOrDefaultAsync(ds => ds.Id == id);
         }
 
-        public async Task<List<DebtsSummary>> GetAllDebtsSummariesForMeAsync(string mySub)
+        public async Task<List<DebtsGroup>> GetAllDebtsSummariesForMeAsync(string mySub)
         {
-            return await IncludeRequiredFields(_context.DebtsSummaries)
-                .Where(ds => ds.Me.Sub == mySub)
+            return await IncludeRequiredFields(_context.DebtsGroups)
+                .Where(ds => ds.User2.Sub == mySub)
                 .Select(ds => IncludeUnmappedFields(ds, mySub))
                 .ToListAsync();
         }
 
-        private IQueryable<DebtsSummary> IncludeRequiredFields(DbSet<DebtsSummary> debtsSummaries)
+        private IQueryable<DebtsGroup> IncludeRequiredFields(DbSet<DebtsGroup> debtsSummaries)
         {
             return debtsSummaries
                 .Include(ds => ds.Debts)
-                .Include(ds => ds.Me)
-                .Include(ds => ds.Partner);
+                .Include(ds => ds.User2)
+                .Include(ds => ds.User1);
         }
 
-        private DebtsSummary IncludeUnmappedFields(DebtsSummary debtsSummary, string mySub)
+        private DebtsGroup IncludeUnmappedFields(DebtsGroup debtsSummary, string mySub)
         {
             var debtDifference = debtsSummary.Debts
                     .Where(d => !d.IsRepaid)
@@ -61,46 +61,30 @@ namespace I.Owe.You.Api.Repository
         {
             var creditorId = debt.CreditorId;
             var debtorId = debt.DebtorId;
-            await CreateOrUpdateDebtsSummaryForPartnerAndMeAsync(creditorId, debtorId, debt);
-            await CreateOrUpdateDebtsSummaryForPartnerAndMeAsync(debtorId, creditorId, debt);
-        }
-
-        private async Task CreateOrUpdateDebtsSummaryForPartnerAndMeAsync(int meId, int partnerId, Debt debt)
-        {
-
-            var myDebtSummary = await GetDebtsSummaryByUserIdAsync(meId);
-            if (myDebtSummary == null)
+            var debtsGroup = await GetDebtsSummaryByUserIdAsync(creditorId, debtorId);
+            if (debtsGroup == null)
             {
-                myDebtSummary = new DebtsSummary
+                debtsGroup = new DebtsGroup
                 {
-                    PartnerId = partnerId,
-                    MeId = meId,
-                    Debts = new List<Debt>()
+                    User1Id = creditorId,
+                    User2Id = debtorId,
                 };
-            }
-            myDebtSummary.Debts.Add(debt);
-            await CreateOrUpdateDebtsSummaryByUserAsync(myDebtSummary);
-        }
-
-        private async Task<DebtsSummary> GetDebtsSummaryByUserIdAsync(int userId)
-        {
-            return await this._context.DebtsSummaries.FirstOrDefaultAsync(ds => ds.MeId == userId);
-        }
-
-        private async Task CreateOrUpdateDebtsSummaryByUserAsync(DebtsSummary debtsSummaryByUser)
-        {
-            var existingDebtsSummary = await GetDebtsSummaryByUserIdAsync(debtsSummaryByUser.MeId);
-            // reset partner object:
-            debtsSummaryByUser.Partner = null;
-            if (existingDebtsSummary == null)
-            {
-                await _context.DebtsSummaries.AddAsync(debtsSummaryByUser);
+                debtsGroup.Debts.Add(debt);
+                await _context.DebtsGroups.AddAsync(debtsGroup);
             }
             else
             {
-                this._context.DebtsSummaries.Update(debtsSummaryByUser);
+                debtsGroup.Debts.Add(debt);
             }
             await this._context.SaveChangesAsync();
+        }
+
+        private async Task<DebtsGroup> GetDebtsSummaryByUserIdAsync(int userId1, int userId2)
+        {
+            return await this._context.DebtsGroups
+                .FirstOrDefaultAsync(ds =>
+                    (ds.User1Id == userId1 && ds.User2Id == userId2) ||
+                    (ds.User2Id == userId1 && ds.User1Id == userId2));
         }
 
 

@@ -11,12 +11,12 @@ namespace I.Owe.You.Api.Repository
     {
 
         private readonly ApiContext _context;
-        private readonly DebtsSummariesRepo _debtsSummariesRepo;
+        private readonly DebtsGroupRepo _debtsGroupRepo;
 
-        public DebtsRepo(ApiContext context, DebtsSummariesRepo debtsSummariesRepo)
+        public DebtsRepo(ApiContext context, DebtsGroupRepo debtsGroupRepo)
         {
             _context = context;
-            _debtsSummariesRepo = debtsSummariesRepo;
+            _debtsGroupRepo = debtsGroupRepo;
         }
 
         public async Task<Debt[]> GetAllDebtsAsync()
@@ -44,7 +44,7 @@ namespace I.Owe.You.Api.Repository
             debt.Debtor = null;
             await this._context.Debts.AddAsync(debt);
             await this._context.SaveChangesAsync();
-            await _debtsSummariesRepo.UpdateSummariesAsync(debt);
+            await _debtsGroupRepo.UpdateSummariesAsync(debt);
         }
     }
 }

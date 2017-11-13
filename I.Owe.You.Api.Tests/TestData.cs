@@ -39,6 +39,16 @@ namespace I.Owe.You.Api.Tests
             Reason = "buy sweets"
         };
 
+        public static readonly Debt Debt3 = new Debt
+        {
+            Debtor = User2,
+            DebtorId = User2.Id,
+            Creditor = User1,
+            CreditorId = User1.Id,
+            Amount = 5,
+            Reason = "buy milk"
+        };
+
     }
 
 }

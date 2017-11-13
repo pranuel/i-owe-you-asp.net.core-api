@@ -43,7 +43,7 @@ namespace I.Owe.You.Api
 
             services.AddScoped<DebtsRepo>();
             services.AddScoped<UsersRepo>();
-            services.AddScoped<DebtsSummariesRepo>();
+            services.AddScoped<DebtsGroupRepo>();
 
             services.AddMvc();
 

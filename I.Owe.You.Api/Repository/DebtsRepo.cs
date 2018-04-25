@@ -24,6 +24,14 @@ namespace I.Owe.You.Api.Repository
             return await _context.Debts.ToArrayAsync();
         }
 
+        public async Task<Debt[]> GetAllDebts()
+        {
+            return await _context.Debts
+                .Include(d => d.Debtor)
+                .Include(d => d.Creditor)
+                .ToArrayAsync();
+        }
+
         public async Task<Debt[]> GetAllDebtsForPartner(int partnerId)
         {
             return await _context.Debts
@@ -44,7 +52,7 @@ namespace I.Owe.You.Api.Repository
             debt.Debtor = null;
             await this._context.Debts.AddAsync(debt);
             await this._context.SaveChangesAsync();
-            await _debtsGroupRepo.UpdateSummariesAsync(debt);
+            // await _debtsGroupRepo.UpdateSummariesAsync(debt);
         }
     }
 }

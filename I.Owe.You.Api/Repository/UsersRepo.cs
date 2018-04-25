@@ -17,6 +17,11 @@ namespace I.Owe.You.Api.Repository
             _context = context;
         }
 
+        public async Task<User[]> GetAllUsers()
+        {
+            return await _context.Users.ToArrayAsync();
+        }
+
         public async Task AddUserAsync(User user)
         {
             await _context.Users.AddAsync(user);

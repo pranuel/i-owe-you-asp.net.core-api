@@ -49,16 +49,12 @@ namespace I.Owe.You.Api.Controllers
             return me;
         }
 
-        // GET api/users?name=foo
+        // GET api/users
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] string name)
         {
-            var user = await _usersRepo.GetUserByName(name);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return Ok(user);
+            var users = await _usersRepo.GetAllUsers();
+            return Ok(users);
         }
     }
 }

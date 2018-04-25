@@ -16,18 +16,20 @@ namespace I.Owe.You.Api.Controllers
             _debtsGroupRepo = debtsGroupRepo;
         }
 
-        // GET api/debtssummaries
+        // GET api/debtsgroups
         [HttpGet]
         public async Task<List<DebtsGroup>> GetAll()
         {
-            return await _debtsGroupRepo.GetAllDebtsSummariesForMeAsync(UserSub);
+            var debtsGroups = await _debtsGroupRepo.GetAllDebtsSummariesForMeAsync(UserSub);
+            return debtsGroups;
         }
 
-        // GET api/debtssummaries/5
+        // GET api/debtsgroups/5
         [HttpGet("{id}")]
-        public async Task<DebtsGroup> GetAsync(int id)
+        public async Task<DebtsGroup> Get(int id)
         {
-            return await _debtsGroupRepo.GetDebtsSummaryByIdAsync(id, UserSub);
+            var debtsGroup = await _debtsGroupRepo.GetDebtsSummaryByIdAsync(id, UserSub);
+            return debtsGroup;
         }
 
     }

@@ -13,8 +13,8 @@ namespace I.Owe.You.Api.Model
         public long Timestamp { get; set; }
         public string Reason { get; set; }
         public bool IsRepaid { get; set; }
-        public string DebtsGroupId { get; set; }
-        public DebtsGroup DebtsGroup { get; set; }
+        // public string DebtsGroupId { get; set; }
+        // public DebtsGroup DebtsGroup { get; set; }
 
     }
 }
